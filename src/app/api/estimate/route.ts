@@ -247,6 +247,8 @@ function buildEmailHtml(
 // ============================================================
 // API ハンドラー
 // ============================================================
+export const maxDuration = 30; // Vercel タイムアウトを30秒に延長
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -261,30 +263,57 @@ export async function POST(req: NextRequest) {
     }
 
     // Gemini で見積もり生成（JSON形式）
+    console.log("[1] Gemini API 呼び出し開始");
     const prompt = buildPrompt({ systemType, qa: qa ?? [] });
-    const result = await getGenAI().models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
-    });
+    let result;
+    try {
+      result = await getGenAI().models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: prompt,
+      });
+    } catch (e) {
+      console.error("[ERROR] Gemini API:", e);
+      return NextResponse.json({ error: "AI見積もりの生成に失敗しました。時間をおいて再度お試しください。" }, { status: 500 });
+    }
     const raw = result.text ?? "";
+    console.log("[2] Gemini レスポンス取得完了");
 
     // JSON を抽出・パース
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("見積もりの生成に失敗しました。");
-    const est: EstimateData = JSON.parse(jsonMatch[0]);
+    if (!jsonMatch) {
+      console.error("[ERROR] JSON抽出失敗。raw:", raw.slice(0, 200));
+      return NextResponse.json({ error: "見積もりデータの解析に失敗しました。" }, { status: 500 });
+    }
+    let est: EstimateData;
+    try {
+      est = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.error("[ERROR] JSON.parse失敗:", e);
+      return NextResponse.json({ error: "見積もりデータの解析に失敗しました。" }, { status: 500 });
+    }
+    console.log("[3] JSON パース完了");
 
     // メール送信
-    await getResend().emails.send({
+    console.log("[4] Resend メール送信開始");
+    const sendOptions: Parameters<ReturnType<typeof getResend>["emails"]["send"]>[0] = {
       from: process.env.FROM_EMAIL!,
       to: email,
-      cc: process.env.TO_EMAIL,
       subject: `【AI見積もり】${systemType}の概算見積もりが届きました`,
       html: buildEmailHtml(systemType, qa ?? [], est),
-    });
+    };
+    if (process.env.TO_EMAIL) sendOptions.cc = process.env.TO_EMAIL;
+
+    try {
+      await getResend().emails.send(sendOptions);
+    } catch (e) {
+      console.error("[ERROR] Resend:", e);
+      return NextResponse.json({ error: "メールの送信に失敗しました。アドレスをご確認ください。" }, { status: 500 });
+    }
+    console.log("[5] メール送信完了");
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("[ERROR] 予期しないエラー:", error);
     return NextResponse.json(
       { error: "処理中にエラーが発生しました。しばらく時間をおいて再度お試しください。" },
       { status: 500 }

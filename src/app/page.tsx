@@ -54,15 +54,16 @@ export default function Home() {
 
         {/* 見出し */}
         <h1 className="text-6xl sm:text-7xl font-extrabold leading-[1.08] tracking-tight text-gray-900 mb-6 max-w-3xl">
-          開発費用が
-          <br />
+          今までの
           <span
             className="relative inline-block"
             style={{ color: "#008080" }}
           >
-            3分
+            1/2
           </span>
-          でわかる
+          で
+          <br />
+          ITシステムを構築
         </h1>
 
         {/* サブテキスト */}

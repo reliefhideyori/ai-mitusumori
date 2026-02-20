@@ -7,15 +7,15 @@ export default function Home() {
       {/* 背景装飾 */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div
-          className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-40"
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-70"
           style={{ background: "radial-gradient(circle, #008080 0%, transparent 70%)" }}
         />
         <div
-          className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full opacity-25"
+          className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full opacity-50"
           style={{ background: "radial-gradient(circle, #008080 0%, transparent 70%)" }}
         />
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.06]"
           style={{
             backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
             backgroundSize: "60px 60px",

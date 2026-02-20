@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { Resend } from "resend";
 
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-const resend = new Resend(process.env.RESEND_API_KEY!);
+const getGenAI = () => new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const getResend = () => new Resend(process.env.RESEND_API_KEY!);
 
 // ============================================================
 // 自社単価テーブル
@@ -262,7 +262,7 @@ export async function POST(req: NextRequest) {
 
     // Gemini で見積もり生成（JSON形式）
     const prompt = buildPrompt({ systemType, qa: qa ?? [] });
-    const result = await genAI.models.generateContent({
+    const result = await getGenAI().models.generateContent({
       model: "gemini-2.0-flash",
       contents: prompt,
     });
@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
     const est: EstimateData = JSON.parse(jsonMatch[0]);
 
     // メール送信
-    await resend.emails.send({
+    await getResend().emails.send({
       from: process.env.FROM_EMAIL!,
       to: email,
       cc: process.env.TO_EMAIL,
